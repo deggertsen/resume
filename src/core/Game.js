@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { Player } from "../entities/Player.js";
 import { InputManager } from "./InputManager.js";
+import { CollisionSystem } from "../systems/CollisionSystem.js";
+import { CrossroadsWorld } from "../scenes/CrossroadsWorld.js";
 
 export class Game {
 	constructor() {
@@ -8,7 +10,9 @@ export class Game {
 		this.camera = null;
 		this.renderer = null;
 		this.inputManager = new InputManager();
+		this.collisionSystem = new CollisionSystem();
 		this.player = null;
+		this.world = null;
 
 		// Game state
 		this.isRunning = false;
@@ -97,64 +101,23 @@ export class Game {
 	}
 
 	async loadInitialScene() {
-		// Create a simple ground plane for now
-		this.createTestEnvironment();
+		// Create the crossroads world
+		this.world = new CrossroadsWorld(this.scene, this.collisionSystem);
 
-		// Create and add player
-		this.player = new Player();
+		// Add collision debug meshes to scene
+		for (const debugMesh of this.collisionSystem.getDebugMeshes()) {
+			this.scene.add(debugMesh);
+		}
+
+		// Create and add player with collision detection
+		this.player = new Player(this.collisionSystem);
 		await this.player.init();
 		this.scene.add(this.player.mesh);
 
-		console.log("🌍 Initial scene loaded!");
+		console.log("🌍 Crossroads world loaded!");
 	}
 
-	createTestEnvironment() {
-		// Create a simple ground plane
-		const groundGeometry = new THREE.PlaneGeometry(200, 200);
-		const groundMaterial = new THREE.MeshLambertMaterial({
-			color: 0x2d5a27, // Forest green
-			flatShading: true,
-		});
 
-		const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-		ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
-		ground.position.y = 0; // Make sure it's at ground level
-		ground.receiveShadow = true;
-		this.scene.add(ground);
-		
-		console.log("🌍 Ground created at:", ground.position);
-
-		// Add some test cubes as obstacles
-		for (let i = 0; i < 5; i++) {
-			const cubeGeometry = new THREE.BoxGeometry(3, 3, 3);
-			const cubeMaterial = new THREE.MeshLambertMaterial({
-				color: Math.random() * 0xffffff,
-				flatShading: true,
-			});
-
-			const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-			cube.position.set(
-				(Math.random() - 0.5) * 30, // Smaller spread for testing
-				1.5,
-				(Math.random() - 0.5) * 30,
-			);
-			cube.castShadow = true;
-			cube.receiveShadow = true;
-			this.scene.add(cube);
-			console.log(`📦 Cube ${i} created at:`, cube.position);
-		}
-
-		// Add a bright test cube at origin for reference
-		const testCube = new THREE.Mesh(
-			new THREE.BoxGeometry(5, 5, 5),
-			new THREE.MeshBasicMaterial({ color: 0xff0000 }) // Bright red, no lighting needed
-		);
-		testCube.position.set(0, 2.5, 0);
-		this.scene.add(testCube);
-		console.log("🎯 Red test cube added at origin");
-
-		console.log("🏗️ Test environment created, scene has", this.scene.children.length, "objects");
-	}
 
 	start() {
 		this.isRunning = true;
@@ -189,6 +152,23 @@ export class Game {
 		// Update player
 		if (this.player) {
 			this.player.update(deltaTime, this.inputManager);
+
+			// Check for area transitions
+			if (this.world) {
+				const transition = this.world.checkAreaTransition(this.player.mesh.position);
+				if (transition) {
+					if (transition.area === 'danger') {
+						// Dungeon requires confirmation
+						this.updateAreaUI(transition.name);
+						// TODO: Add ENTER key handling for dungeon
+					} else {
+						// Auto-transition to other areas
+						this.transitionToArea(transition.area, transition.name);
+					}
+				} else {
+					this.clearAreaUI();
+				}
+			}
 
 			// Update camera to follow player
 			this.updateCamera();
@@ -233,6 +213,38 @@ export class Game {
 		this.renderer.setSize(width, height);
 
 		console.log("📏 Game resized to", width, "x", height);
+	}
+
+	updateAreaUI(areaName) {
+		const areaIndicator = document.getElementById('area-indicator');
+		if (areaIndicator) {
+			areaIndicator.textContent = `Press ENTER to enter ${areaName}`;
+			areaIndicator.style.display = 'block';
+		}
+	}
+
+	clearAreaUI() {
+		const areaIndicator = document.getElementById('area-indicator');
+		if (areaIndicator) {
+			areaIndicator.style.display = 'none';
+		}
+	}
+
+	transitionToArea(area, areaName) {
+		console.log(`🚪 Transitioning to ${areaName}...`);
+		
+		// For now, just show a message - later we'll implement actual scene switching
+		const areaDisplay = document.getElementById('area-display');
+		if (areaDisplay) {
+			areaDisplay.textContent = `Entering ${areaName}...`;
+			areaDisplay.style.opacity = '1';
+			
+			setTimeout(() => {
+				areaDisplay.style.opacity = '0';
+				// TODO: Implement actual scene switching in Phase 3
+				console.log(`🌟 Welcome to ${areaName}! (Scene switching coming in Phase 3)`);
+			}, 2000);
+		}
 	}
 
 	isMobile() {

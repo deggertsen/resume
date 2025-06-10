@@ -1,12 +1,15 @@
 import * as THREE from "three";
+import { createPlayer, createSwordHitbox } from "./CharacterModel.js";
 
 export class Player {
-	constructor() {
+	constructor(collisionSystem = null) {
 		this.mesh = null;
 		this.velocity = new THREE.Vector3(0, 0, 0); // Explicitly set to zero
 		this.speed = 15;
 		this.acceleration = 50;
 		this.friction = 15;
+		this.collisionSystem = collisionSystem;
+		this.size = { width: 6, height: 8, depth: 6 }; // Player collision box size
 
 		// Player stats
 		this.maxHealth = 100;
@@ -23,16 +26,14 @@ export class Player {
 	}
 
 	createMesh() {
-		// Create a super simple, super visible player for debugging
-		const cubeGeometry = new THREE.BoxGeometry(8, 8, 8);
-		const cubeMaterial = new THREE.MeshBasicMaterial({
-			color: 0x00ff00, // Bright green
-		});
+		// Create our awesome low-poly character
+		this.mesh = createPlayer();
+		this.mesh.position.set(0, 0, 0); // Start at origin
 		
-		this.mesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
-		this.mesh.position.set(0, 4, 0); // Raise it above ground so it's clearly visible
+		// Create sword hitbox for future combat system
+		this.swordHitbox = createSwordHitbox(this.mesh);
 		
-		console.log("🧙‍♂️ Player mesh (simple cube) created at position:", this.mesh.position);
+		console.log("🧙‍♂️ Low-poly player character created at position:", this.mesh.position);
 	}
 
 	update(deltaTime, inputManager) {
@@ -48,31 +49,49 @@ export class Player {
 		
 		// Move when there's input
 		if (moveInput.x !== 0 || moveInput.z !== 0) {
-			// Simple direct movement - no velocity/physics for now
 			const moveSpeed = 20; // units per second
 			const moveDistance = moveSpeed * deltaTime;
 			
-			// Move directly based on input
-			this.mesh.position.x += moveInput.x * moveDistance;
-			this.mesh.position.z += moveInput.z * moveDistance;
+			// Calculate potential new position
+			const newPosition = this.mesh.position.clone();
+			newPosition.x += moveInput.x * moveDistance;
+			newPosition.z += moveInput.z * moveDistance;
+			
+			// Check collision if collision system is available
+			if (this.collisionSystem) {
+				const collision = this.collisionSystem.checkCollision(newPosition, this.size);
+				
+				if (!collision.collision) {
+					// Safe to move
+					this.mesh.position.copy(newPosition);
+				} else {
+					// Try moving on just one axis at a time (sliding)
+					const xOnlyPosition = this.mesh.position.clone();
+					xOnlyPosition.x += moveInput.x * moveDistance;
+					
+					const zOnlyPosition = this.mesh.position.clone();
+					zOnlyPosition.z += moveInput.z * moveDistance;
+					
+					const xCollision = this.collisionSystem.checkCollision(xOnlyPosition, this.size);
+					const zCollision = this.collisionSystem.checkCollision(zOnlyPosition, this.size);
+					
+					// Allow movement on axes that don't collide
+					if (!xCollision.collision) {
+						this.mesh.position.x = xOnlyPosition.x;
+					}
+					if (!zCollision.collision) {
+						this.mesh.position.z = zOnlyPosition.z;
+					}
+				}
+			} else {
+				// No collision system, move freely
+				this.mesh.position.copy(newPosition);
+			}
 			
 			// Face movement direction
 			const targetRotation = Math.atan2(moveInput.x, moveInput.z);
 			this.mesh.rotation.y = targetRotation;
 		}
-
-		// Simple boundary checking (keep player in reasonable area)
-		const boundary = 90;
-		this.mesh.position.x = THREE.MathUtils.clamp(
-			this.mesh.position.x,
-			-boundary,
-			boundary,
-		);
-		this.mesh.position.z = THREE.MathUtils.clamp(
-			this.mesh.position.z,
-			-boundary,
-			boundary,
-		);
 	}
 
 	takeDamage(amount) {
