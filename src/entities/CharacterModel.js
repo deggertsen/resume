@@ -131,10 +131,11 @@ export function createPlayer() {
 		crossguard.castShadow = true;
 		swordGroup.add(crossguard);
 		
-		// Position sword on back initially
-		swordGroup.position.set(1.2, 3, -1.5);
-		swordGroup.rotation.z = Math.PI / 4; // Diagonal on back
-		swordGroup.rotation.x = -Math.PI / 6; // Slight tilt
+		// Position sword hilt in character's right hand, angled forward
+		swordGroup.position.set(2.5, 1, 0.7); // Right hand position (same as right arm)
+		swordGroup.rotation.z = 0; // Level horizontally  
+		swordGroup.rotation.y = 0; // Pointing straight forward
+		swordGroup.rotation.x = Math.PI / 6; // Angled forward (30 degrees - REVERSED!)
 		
 		group.add(swordGroup);
 		

@@ -324,15 +324,15 @@ export class Player {
 	}
 
 	animateSwordDraw(progress) {
-		// Move sword from back to right hand position
+		// Move sword from back to right hand ready position
 		const startPos = this.swordRestPosition;
-		const endPos = new THREE.Vector3(2, 1, 0.5); // Right hand position
+		const endPos = new THREE.Vector3(2.5, 2, 0.8); // Right hand ready position
 		
 		this.sword.position.lerpVectors(startPos, endPos, progress);
 		
-		// Rotate sword to wielding position
+		// Rotate sword to ready wielding position
 		const startRot = this.swordRestRotation;
-		const endRot = new THREE.Euler(0, 0, Math.PI / 2); // Horizontal ready position
+		const endRot = new THREE.Euler(0, Math.PI / 6, Math.PI / 3); // Raised ready position
 		
 		this.sword.rotation.x = THREE.MathUtils.lerp(startRot.x, endRot.x, progress);
 		this.sword.rotation.y = THREE.MathUtils.lerp(startRot.y, endRot.y, progress);
@@ -340,21 +340,27 @@ export class Player {
 	}
 
 	animateSwordSwing(progress) {
-		// Swing sword in an arc from right to left
-		const swingAngle = Math.PI * progress; // 180-degree swing
+		// Swing sword in a controlled arc like you're actually holding it
+		const swingAngle = Math.PI * 0.5 * progress; // 90-degree swing
 		
-		// Position sword in an arc
-		const radius = 3;
-		const angle = -Math.PI / 4 + swingAngle; // Start from right, swing left
+		// Reasonable radius that looks like arm extension
+		const radius = 3.2; // Close enough to look like you're holding it
+		const baseAngle = Math.PI / 8; // Start slightly to the right
+		const angle = baseAngle + swingAngle;
 		
+		// Position sword in a controlled arc from right to left
 		this.sword.position.set(
-			Math.cos(angle) * radius,
-			1 + Math.sin(angle * 0.5) * 0.5, // Slight vertical arc
-			Math.sin(angle) * radius
+			Math.cos(angle) * radius + 0.8, // Offset to right side
+			2 + Math.sin(progress * Math.PI) * 0.4, // Natural height variation
+			Math.sin(angle) * radius + 1.5 // In front but not too far
 		);
 		
-		// Rotate sword to follow the swing
-		this.sword.rotation.set(0, angle, Math.PI / 2);
+		// Rotate sword naturally as if being held
+		this.sword.rotation.set(
+			-Math.PI / 12, // Slight downward angle
+			angle + Math.PI / 3, // Follow swing direction
+			Math.PI / 4 + Math.cos(progress * Math.PI) * 0.3 // Natural wrist rotation
+		);
 	}
 
 	animateSwordReturn(progress) {
