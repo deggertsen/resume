@@ -184,8 +184,8 @@ export class Game {
 		if (this.player) {
 			this.player.update(deltaTime, this.inputManager);
 
-			// Update camera to follow player
-			this.updateCamera();
+			// Temporarily disable camera following for debugging
+			// this.updateCamera();
 		}
 	}
 

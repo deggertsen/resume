@@ -3,7 +3,7 @@ import * as THREE from "three";
 export class Player {
 	constructor() {
 		this.mesh = null;
-		this.velocity = new THREE.Vector3();
+		this.velocity = new THREE.Vector3(0, 0, 0); // Explicitly set to zero
 		this.speed = 15;
 		this.acceleration = 50;
 		this.friction = 15;
@@ -23,48 +23,16 @@ export class Player {
 	}
 
 	createMesh() {
-		// For now, create a simple capsule-like character
-		const group = new THREE.Group();
-
-		// Body (cylinder)
-		const bodyGeometry = new THREE.CylinderGeometry(0.8, 1, 2.5, 8);
-		const bodyMaterial = new THREE.MeshLambertMaterial({
-			color: 0x4a9eff, // Blue tunic
-			flatShading: true,
+		// Create a super simple, super visible player for debugging
+		const cubeGeometry = new THREE.BoxGeometry(8, 8, 8);
+		const cubeMaterial = new THREE.MeshBasicMaterial({
+			color: 0x00ff00, // Bright green
 		});
-		const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-		body.position.y = 1.25;
-		body.castShadow = true;
-		group.add(body);
-
-		// Head (sphere)
-		const headGeometry = new THREE.SphereGeometry(0.6, 8, 6);
-		const headMaterial = new THREE.MeshLambertMaterial({
-			color: 0xffdbac, // Skin tone
-			flatShading: true,
-		});
-		const head = new THREE.Mesh(headGeometry, headMaterial);
-		head.position.y = 3;
-		head.castShadow = true;
-		group.add(head);
-
-		// Simple sword (will be replaced with proper model later)
-		const swordGeometry = new THREE.BoxGeometry(0.1, 0.1, 1.5);
-		const swordMaterial = new THREE.MeshLambertMaterial({
-			color: 0xc0c0c0, // Silver
-			flatShading: true,
-		});
-		const sword = new THREE.Mesh(swordGeometry, swordMaterial);
-		sword.position.set(1.2, 1.5, 0);
-		sword.castShadow = true;
-		group.add(sword);
-
-		// Store sword reference for future attack animations
-		this.sword = sword;
-
-		this.mesh = group;
-		this.mesh.position.set(0, 0, 0);
-		console.log("🧙‍♂️ Player mesh created at position:", this.mesh.position);
+		
+		this.mesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
+		this.mesh.position.set(0, 4, 0); // Raise it above ground so it's clearly visible
+		
+		console.log("🧙‍♂️ Player mesh (simple cube) created at position:", this.mesh.position);
 	}
 
 	update(deltaTime, inputManager) {
@@ -77,36 +45,27 @@ export class Player {
 
 	handleMovement(deltaTime, inputManager) {
 		const moveInput = inputManager.getMovementVector();
-		const moveVector = new THREE.Vector3(moveInput.x, 0, moveInput.z);
-
-		// Normalize diagonal movement
-		if (moveVector.length() > 0) {
-			moveVector.normalize();
-
-			// Apply acceleration
-			this.velocity.addScaledVector(moveVector, this.acceleration * deltaTime);
-
-			// Limit max speed
-			if (this.velocity.length() > this.speed) {
-				this.velocity.setLength(this.speed);
-			}
-
+		
+		// Debug raw input only when there's actual input
+		if (moveInput.x !== 0 || moveInput.z !== 0) {
+			console.log("🏃‍♂️ Raw movement input:", moveInput, "deltaTime:", deltaTime);
+			
+			// Simple direct movement - no velocity/physics for now
+			const moveSpeed = 20; // units per second
+			const moveDistance = moveSpeed * deltaTime;
+			
+			// Move directly based on input
+			this.mesh.position.x += moveInput.x * moveDistance;
+			this.mesh.position.z += moveInput.z * moveDistance;
+			
+			console.log("📍 New position:", this.mesh.position);
+			
 			// Face movement direction
-			if (moveVector.length() > 0.1) {
-				const targetRotation = Math.atan2(moveVector.x, moveVector.z);
-				this.mesh.rotation.y = THREE.MathUtils.lerp(
-					this.mesh.rotation.y,
-					targetRotation,
-					8 * deltaTime,
-				);
+			if (moveInput.x !== 0 || moveInput.z !== 0) {
+				const targetRotation = Math.atan2(moveInput.x, moveInput.z);
+				this.mesh.rotation.y = targetRotation;
 			}
-		} else {
-			// Apply friction when not moving
-			this.velocity.multiplyScalar((1 - this.friction) ** deltaTime);
 		}
-
-		// Apply movement
-		this.mesh.position.addScaledVector(this.velocity, deltaTime);
 
 		// Simple boundary checking (keep player in reasonable area)
 		const boundary = 90;
