@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { Player } from "../entities/Player.js";
 import { InputManager } from "./InputManager.js";
 import { CollisionSystem } from "../systems/CollisionSystem.js";
-import { CrossroadsWorld } from "../scenes/CrossroadsWorld.js";
+import { UnifiedWorld } from "../scenes/UnifiedWorld.js";
 
 export class Game {
 	constructor() {
@@ -101,20 +101,20 @@ export class Game {
 	}
 
 	async loadInitialScene() {
-		// Create the crossroads world
-		this.world = new CrossroadsWorld(this.scene, this.collisionSystem);
+		// Create the unified world with all areas
+		this.world = new UnifiedWorld(this.scene, this.collisionSystem);
 
 		// Add collision debug meshes to scene
 		for (const debugMesh of this.collisionSystem.getDebugMeshes()) {
 			this.scene.add(debugMesh);
 		}
 
-		// Create and add player with collision detection
-		this.player = new Player(this.collisionSystem);
+		// Create and add player with collision detection and world reference
+		this.player = new Player(this.collisionSystem, this.world);
 		await this.player.init();
 		this.scene.add(this.player.mesh);
 
-		console.log("🌍 Crossroads world loaded!");
+		console.log("🌍 Unified world with all areas loaded!");
 	}
 
 
@@ -153,20 +153,21 @@ export class Game {
 		if (this.player) {
 			this.player.update(deltaTime, this.inputManager);
 
-			// Check for area transitions
+			// Check for area zones
 			if (this.world) {
-				const transition = this.world.checkAreaTransition(this.player.mesh.position);
-				if (transition) {
-					if (transition.area === 'danger') {
-						// Dungeon requires confirmation
-						this.updateAreaUI(transition.name);
-						// TODO: Add ENTER key handling for dungeon
+				const currentArea = this.world.getCurrentArea(this.player.mesh.position);
+				if (currentArea) {
+					if (currentArea.area === 'danger') {
+						// Dungeon requires confirmation for transition to separate scene
+						this.updateAreaUI(currentArea.name);
+						// TODO: Add ENTER key handling for dungeon scene transition
 					} else {
-						// Auto-transition to other areas
-						this.transitionToArea(transition.area, transition.name);
+						// Display current area name
+						this.updateCurrentAreaDisplay(currentArea.name);
 					}
 				} else {
 					this.clearAreaUI();
+					this.clearCurrentAreaDisplay();
 				}
 			}
 
@@ -230,20 +231,25 @@ export class Game {
 		}
 	}
 
-	transitionToArea(area, areaName) {
-		console.log(`🚪 Transitioning to ${areaName}...`);
-		
-		// For now, just show a message - later we'll implement actual scene switching
+	updateCurrentAreaDisplay(areaName) {
 		const areaDisplay = document.getElementById('area-display');
 		if (areaDisplay) {
-			areaDisplay.textContent = `Entering ${areaName}...`;
-			areaDisplay.style.opacity = '1';
-			
-			setTimeout(() => {
-				areaDisplay.style.opacity = '0';
-				// TODO: Implement actual scene switching in Phase 3
-				console.log(`🌟 Welcome to ${areaName}! (Scene switching coming in Phase 3)`);
-			}, 2000);
+			if (areaDisplay.textContent !== areaName) {
+				areaDisplay.textContent = areaName;
+				areaDisplay.style.opacity = '1';
+				
+				// Auto-fade after showing area name briefly
+				setTimeout(() => {
+					areaDisplay.style.opacity = '0.3';
+				}, 2000);
+			}
+		}
+	}
+
+	clearCurrentAreaDisplay() {
+		const areaDisplay = document.getElementById('area-display');
+		if (areaDisplay) {
+			areaDisplay.style.opacity = '0';
 		}
 	}
 

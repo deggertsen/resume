@@ -100,22 +100,43 @@ export function createPlayer() {
 		rightBoot.castShadow = true;
 		group.add(rightBoot);
 		
-		// Add a simple sword on the back (optional flair)
-		const swordHandleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1);
+		// Create a prominent sword (starts on back, animates during attacks)
+		const swordGroup = new THREE.Group();
+		swordGroup.name = 'sword'; // Name it so we can find it later
+		
+		// Sword handle (bigger and more visible)
+		const swordHandleGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2);
 		const swordHandleMaterial = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
 		const swordHandle = new THREE.Mesh(swordHandleGeometry, swordHandleMaterial);
-		swordHandle.position.set(1.5, 2, -1.2);
-		swordHandle.rotation.z = Math.PI / 6;
+		swordHandle.position.set(0, -1, 0);
 		swordHandle.castShadow = true;
-		group.add(swordHandle);
+		swordGroup.add(swordHandle);
 		
-		const swordBladeGeometry = new THREE.BoxGeometry(0.2, 3, 0.1);
-		const swordBladeMaterial = new THREE.MeshLambertMaterial({ color: 0xc0c0c0 });
+		// Sword blade (bigger and shinier)
+		const swordBladeGeometry = new THREE.BoxGeometry(0.4, 6, 0.2);
+		const swordBladeMaterial = new THREE.MeshLambertMaterial({ 
+			color: 0xe6e6e6, // Brighter silver
+			emissive: 0x222222 // Slight glow
+		});
 		const swordBlade = new THREE.Mesh(swordBladeGeometry, swordBladeMaterial);
-		swordBlade.position.set(1.5, 4, -1.2);
-		swordBlade.rotation.z = Math.PI / 6;
+		swordBlade.position.set(0, 2, 0);
 		swordBlade.castShadow = true;
-		group.add(swordBlade);
+		swordGroup.add(swordBlade);
+		
+		// Sword crossguard
+		const crossguardGeometry = new THREE.BoxGeometry(1.5, 0.3, 0.3);
+		const crossguardMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+		const crossguard = new THREE.Mesh(crossguardGeometry, crossguardMaterial);
+		crossguard.position.set(0, 0, 0);
+		crossguard.castShadow = true;
+		swordGroup.add(crossguard);
+		
+		// Position sword on back initially
+		swordGroup.position.set(1.2, 3, -1.5);
+		swordGroup.rotation.z = Math.PI / 4; // Diagonal on back
+		swordGroup.rotation.x = -Math.PI / 6; // Slight tilt
+		
+		group.add(swordGroup);
 		
 		// Position the entire character properly
 		group.position.y = 4; // Lift character so feet are on ground
