@@ -52,22 +52,19 @@ export class Game {
 	}
 
 	setupCamera() {
-		// Use OrthographicCamera for true Zelda-style top-down view
-		const frustumSize = 75;
-		const aspect = window.innerWidth / window.innerHeight;
-
-		this.camera = new THREE.OrthographicCamera(
-			(frustumSize * aspect) / -2,
-			(frustumSize * aspect) / 2,
-			frustumSize / 2,
-			frustumSize / -2,
-			1,
-			1000,
+		// Temporarily use perspective camera for debugging
+		this.camera = new THREE.PerspectiveCamera(
+			75, // field of view
+			window.innerWidth / window.innerHeight, // aspect ratio
+			0.1, // near plane
+			1000 // far plane
 		);
 
-		this.camera.position.set(0, 50, 0);
-		this.camera.up.set(0, 0, -1); // Important for correct orientation
+		// Position camera at an angle to see the scene better
+		this.camera.position.set(20, 30, 20);
 		this.camera.lookAt(0, 0, 0);
+		
+		console.log("🎥 Camera setup (perspective):", this.camera.position, "looking at origin");
 	}
 
 	setupLighting() {
@@ -115,8 +112,11 @@ export class Game {
 
 		const ground = new THREE.Mesh(groundGeometry, groundMaterial);
 		ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+		ground.position.y = 0; // Make sure it's at ground level
 		ground.receiveShadow = true;
 		this.scene.add(ground);
+		
+		console.log("🌍 Ground created at:", ground.position);
 
 		// Add some test cubes as obstacles
 		for (let i = 0; i < 5; i++) {
@@ -128,16 +128,26 @@ export class Game {
 
 			const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
 			cube.position.set(
-				(Math.random() - 0.5) * 80,
+				(Math.random() - 0.5) * 30, // Smaller spread for testing
 				1.5,
-				(Math.random() - 0.5) * 80,
+				(Math.random() - 0.5) * 30,
 			);
 			cube.castShadow = true;
 			cube.receiveShadow = true;
 			this.scene.add(cube);
+			console.log(`📦 Cube ${i} created at:`, cube.position);
 		}
 
-		console.log("🏗️ Test environment created");
+		// Add a bright test cube at origin for reference
+		const testCube = new THREE.Mesh(
+			new THREE.BoxGeometry(5, 5, 5),
+			new THREE.MeshBasicMaterial({ color: 0xff0000 }) // Bright red, no lighting needed
+		);
+		testCube.position.set(0, 2.5, 0);
+		this.scene.add(testCube);
+		console.log("🎯 Red test cube added at origin");
+
+		console.log("🏗️ Test environment created, scene has", this.scene.children.length, "objects");
 	}
 
 	start() {
@@ -180,31 +190,32 @@ export class Game {
 	}
 
 	updateCamera() {
-		if (this.player) {
-			// Smooth camera following
-			const targetPosition = this.player.mesh.position.clone();
-			targetPosition.y = 50; // Keep camera height
+		// Temporarily disable camera following to debug
+		// if (this.player) {
+		// 	// Smooth camera following
+		// 	const targetPosition = this.player.mesh.position.clone();
+		// 	targetPosition.y = 50; // Keep camera height
 
-			this.camera.position.lerp(targetPosition, 0.05);
-			this.camera.lookAt(this.player.mesh.position);
-		}
+		// 	this.camera.position.lerp(targetPosition, 0.05);
+		// 	this.camera.lookAt(this.player.mesh.position);
+		// }
 	}
 
 	render() {
 		this.renderer.render(this.scene, this.camera);
+		
+		// Debug render info (only log every 60 frames to avoid spam)
+		if (this.clock.elapsedTime > 0 && Math.floor(this.clock.elapsedTime * 60) % 60 === 0) {
+			console.log("🖼️ Rendering scene with", this.scene.children.length, "objects");
+		}
 	}
 
 	handleResize() {
 		const width = window.innerWidth;
 		const height = window.innerHeight;
-		const aspect = width / height;
-		const frustumSize = 75;
 
-		// Update camera
-		this.camera.left = (frustumSize * aspect) / -2;
-		this.camera.right = (frustumSize * aspect) / 2;
-		this.camera.top = frustumSize / 2;
-		this.camera.bottom = frustumSize / -2;
+		// Update camera aspect ratio for perspective camera
+		this.camera.aspect = width / height;
 		this.camera.updateProjectionMatrix();
 
 		// Update renderer

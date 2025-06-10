@@ -64,6 +64,7 @@ export class Player {
 
 		this.mesh = group;
 		this.mesh.position.set(0, 0, 0);
+		console.log("🧙‍♂️ Player mesh created at position:", this.mesh.position);
 	}
 
 	update(deltaTime, inputManager) {
