@@ -52,19 +52,25 @@ export class Game {
 	}
 
 	setupCamera() {
-		// Temporarily use perspective camera for debugging
-		this.camera = new THREE.PerspectiveCamera(
-			75, // field of view
-			window.innerWidth / window.innerHeight, // aspect ratio
-			0.1, // near plane
-			1000 // far plane
+		// Use OrthographicCamera for SNES Zelda-style angled view
+		const frustumSize = 50; // Smaller for closer view
+		const aspect = window.innerWidth / window.innerHeight;
+
+		this.camera = new THREE.OrthographicCamera(
+			(frustumSize * aspect) / -2,
+			(frustumSize * aspect) / 2,
+			frustumSize / 2,
+			frustumSize / -2,
+			1,
+			1000,
 		);
 
-		// Position camera at an angle to see the scene better
-		this.camera.position.set(20, 30, 20);
+		// Position camera at an angle like SNES Zelda - slightly behind and above
+		this.camera.position.set(0, 40, 25); // Y=height, Z=distance back
+		this.camera.up.set(0, 1, 0); // Standard up vector for angled view
 		this.camera.lookAt(0, 0, 0);
 		
-		console.log("🎥 Camera setup (perspective):", this.camera.position, "looking at origin");
+		console.log("🎥 Camera setup (SNES-style angled):", this.camera.position);
 	}
 
 	setupLighting() {
@@ -184,21 +190,21 @@ export class Game {
 		if (this.player) {
 			this.player.update(deltaTime, this.inputManager);
 
-			// Temporarily disable camera following for debugging
-			// this.updateCamera();
+			// Update camera to follow player
+			this.updateCamera();
 		}
 	}
 
 	updateCamera() {
-		// Temporarily disable camera following to debug
-		// if (this.player) {
-		// 	// Smooth camera following
-		// 	const targetPosition = this.player.mesh.position.clone();
-		// 	targetPosition.y = 50; // Keep camera height
+		if (this.player) {
+			// Smooth camera following for SNES-style angled view
+			const targetPosition = this.player.mesh.position.clone();
+			targetPosition.y = 40; // Camera height
+			targetPosition.z += 25; // Camera distance back
 
-		// 	this.camera.position.lerp(targetPosition, 0.05);
-		// 	this.camera.lookAt(this.player.mesh.position);
-		// }
+			this.camera.position.lerp(targetPosition, 0.1);
+			this.camera.lookAt(this.player.mesh.position);
+		}
 	}
 
 	render() {
@@ -213,9 +219,14 @@ export class Game {
 	handleResize() {
 		const width = window.innerWidth;
 		const height = window.innerHeight;
+		const aspect = width / height;
+		const frustumSize = 50;
 
-		// Update camera aspect ratio for perspective camera
-		this.camera.aspect = width / height;
+		// Update orthographic camera
+		this.camera.left = (frustumSize * aspect) / -2;
+		this.camera.right = (frustumSize * aspect) / 2;
+		this.camera.top = frustumSize / 2;
+		this.camera.bottom = frustumSize / -2;
 		this.camera.updateProjectionMatrix();
 
 		// Update renderer

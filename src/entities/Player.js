@@ -46,10 +46,8 @@ export class Player {
 	handleMovement(deltaTime, inputManager) {
 		const moveInput = inputManager.getMovementVector();
 		
-		// Debug raw input only when there's actual input
+		// Move when there's input
 		if (moveInput.x !== 0 || moveInput.z !== 0) {
-			console.log("🏃‍♂️ Raw movement input:", moveInput, "deltaTime:", deltaTime);
-			
 			// Simple direct movement - no velocity/physics for now
 			const moveSpeed = 20; // units per second
 			const moveDistance = moveSpeed * deltaTime;
@@ -58,13 +56,9 @@ export class Player {
 			this.mesh.position.x += moveInput.x * moveDistance;
 			this.mesh.position.z += moveInput.z * moveDistance;
 			
-			console.log("📍 New position:", this.mesh.position);
-			
 			// Face movement direction
-			if (moveInput.x !== 0 || moveInput.z !== 0) {
-				const targetRotation = Math.atan2(moveInput.x, moveInput.z);
-				this.mesh.rotation.y = targetRotation;
-			}
+			const targetRotation = Math.atan2(moveInput.x, moveInput.z);
+			this.mesh.rotation.y = targetRotation;
 		}
 
 		// Simple boundary checking (keep player in reasonable area)
