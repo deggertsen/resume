@@ -3,6 +3,7 @@ import { Player } from "../entities/Player.js";
 import { InputManager } from "./InputManager.js";
 import { CollisionSystem } from "../systems/CollisionSystem.js";
 import { UnifiedWorld } from "../scenes/UnifiedWorld.js";
+import { AreaNotification } from "../utils/AreaNotification.js";
 
 export class Game {
 	constructor() {
@@ -13,11 +14,13 @@ export class Game {
 		this.collisionSystem = new CollisionSystem();
 		this.player = null;
 		this.world = null;
+		this.areaNotification = null;
 
 		// Game state
 		this.isRunning = false;
 		this.isPaused = false;
 		this.clock = new THREE.Clock();
+		this.currentAreaName = null;
 
 		// Make game accessible globally for debugging
 		window.game = this;
@@ -30,6 +33,9 @@ export class Game {
 
 		// Initialize input handling
 		this.inputManager.init();
+		
+		// Initialize area notification system
+		this.areaNotification = new AreaNotification();
 
 		console.log("🎮 Game core initialized successfully!");
 	}
@@ -163,17 +169,28 @@ export class Game {
 			if (this.world) {
 				const currentArea = this.world.getCurrentArea(this.player.mesh.position);
 				if (currentArea) {
+					// Check if we've entered a new area
+					if (this.currentAreaName !== currentArea.name) {
+						this.currentAreaName = currentArea.name;
+						
+						// Show area notification with custom description
+						if (this.areaNotification) {
+							const description = this.areaNotification.getAreaDescription(currentArea.name);
+							this.areaNotification.show(currentArea.name, description);
+						}
+					}
+					
 					if (currentArea.area === 'danger') {
 						// Dungeon requires confirmation for transition to separate scene
 						this.updateAreaUI(currentArea.name);
 						// TODO: Add ENTER key handling for dungeon scene transition
-					} else {
-						// Display current area name
-						this.updateCurrentAreaDisplay(currentArea.name);
 					}
 				} else {
+					// Clear current area when leaving all zones
+					if (this.currentAreaName !== null) {
+						this.currentAreaName = null;
+					}
 					this.clearAreaUI();
-					this.clearCurrentAreaDisplay();
 				}
 			}
 

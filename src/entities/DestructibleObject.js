@@ -1,16 +1,19 @@
 import * as THREE from 'three';
 
 export class DestructibleObject {
-	constructor(scene, position, type = 'grass') {
+	constructor(scene, position, type = 'grass', collisionSystem = null) {
 		this.scene = scene;
 		this.position = position;
 		this.type = type;
 		this.mesh = null;
 		this.isDestroyed = false;
 		this.boundingBox = null;
+		this.collisionSystem = collisionSystem;
+		this.collider = null;
 		
 		this.createMesh();
 		this.setupBoundingBox();
+		this.setupCollision();
 	}
 
 	createMesh() {
@@ -22,6 +25,24 @@ export class DestructibleObject {
 		if (this.mesh) {
 			this.boundingBox = new THREE.Box3().setFromObject(this.mesh);
 		}
+	}
+
+	setupCollision() {
+		if (this.mesh && this.collisionSystem) {
+			const size = this.getCollisionSize();
+			if (size.width > 0) { // Only add collision for objects that should have it
+				this.collider = this.collisionSystem.addCollider(
+					this.mesh, 
+					size, 
+					`destructible-${this.type}-${Math.random()}`
+				);
+			}
+		}
+	}
+
+	getCollisionSize() {
+		// Override in subclasses - return {width: 0, height: 0, depth: 0} for no collision
+		return { width: 2, height: 2, depth: 2 };
 	}
 
 	update(deltaTime) {
@@ -50,6 +71,12 @@ export class DestructibleObject {
 
 		this.isDestroyed = true;
 		this.createDestructionEffect();
+		
+		// Remove collision first
+		if (this.collider && this.collisionSystem) {
+			this.collisionSystem.removeCollider(this.collider);
+			this.collider = null;
+		}
 		
 		// Remove from scene
 		if (this.mesh) {
@@ -129,8 +156,13 @@ export class DestructibleObject {
 }
 
 export class GrassPatch extends DestructibleObject {
-	constructor(scene, position) {
-		super(scene, position, 'grass');
+	constructor(scene, position, collisionSystem = null) {
+		super(scene, position, 'grass', collisionSystem);
+	}
+
+	getCollisionSize() {
+		// Grass has no collision - you can walk through it
+		return { width: 0, height: 0, depth: 0 };
 	}
 
 	createMesh() {
@@ -159,9 +191,9 @@ export class GrassPatch extends DestructibleObject {
 	}
 
 	createGrassBlade() {
-		// Make grass much taller and more visible
-		const height = 3 + Math.random() * 2; // 3-5 units tall
-		const geometry = new THREE.ConeGeometry(0.15, height, 4);
+		// Make grass tall and majestic!
+		const height = 5 + Math.random() * 3; // 5-8 units tall - much more impressive!
+		const geometry = new THREE.ConeGeometry(0.2, height, 4); // Slightly thicker too
 		const material = new THREE.MeshLambertMaterial({ 
 			color: 0x4a7c59,
 			side: THREE.DoubleSide 
@@ -180,8 +212,13 @@ export class GrassPatch extends DestructibleObject {
 }
 
 export class WoodenCrate extends DestructibleObject {
-	constructor(scene, position) {
-		super(scene, position, 'crate');
+	constructor(scene, position, collisionSystem = null) {
+		super(scene, position, 'crate', collisionSystem);
+	}
+
+	getCollisionSize() {
+		// Crates are solid - you can't walk through them!
+		return { width: 3, height: 3, depth: 3 };
 	}
 
 	createMesh() {

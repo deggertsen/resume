@@ -369,7 +369,7 @@ export class UnifiedWorld {
 
 				// Don't place grass too close to signposts or buildings
 				if (this.isPositionClear(position, 8)) { // Increased clearance
-					const grass = new GrassPatch(this.scene, position);
+					const grass = new GrassPatch(this.scene, position, this.collisionSystem);
 					this.destructibles.push(grass);
 				}
 			}
@@ -401,7 +401,7 @@ export class UnifiedWorld {
 		for (const pos of cratePositions) {
 			const position = new THREE.Vector3(pos.x, 0, pos.z);
 			if (this.isPositionClear(position, 3)) {
-				const crate = new WoodenCrate(this.scene, position);
+				const crate = new WoodenCrate(this.scene, position, this.collisionSystem);
 				this.destructibles.push(crate);
 			}
 		}

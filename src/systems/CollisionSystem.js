@@ -35,6 +35,16 @@ export class CollisionSystem {
 		return collider;
 	}
 
+	removeCollider(collider) {
+		const index = this.colliders.indexOf(collider);
+		if (index > -1) {
+			this.colliders.splice(index, 1);
+			console.log(`🗑️ Removed collider: ${collider.name}`);
+			return true;
+		}
+		return false;
+	}
+
 	checkCollision(position, size) {
 		const halfSize = {
 			x: size.width / 2,
