@@ -129,6 +129,33 @@
                 border-color: #44ff44;
             }
         }
+
+        .info-card {
+            text-align: left;
+        }
+
+        .info-card h3 {
+            color: #00ff88;
+            margin: 0 0 10px 0;
+            font-size: 1.4rem;
+            border-bottom: 1px solid #00ff88;
+            padding-bottom: 5px;
+        }
+
+        .info-card p {
+            margin: 0 0 15px 0;
+            line-height: 1.4;
+            color: #e0e0e0;
+        }
+
+        .info-card .details {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 3px solid #00ff88;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -162,6 +189,25 @@
                 animation: pulse 2s infinite;
             ">
                 Press ENTER to enter area
+            </div>
+            <div id="content-display" style="
+                position: absolute;
+                top: 20%;
+                right: 20px;
+                width: 300px;
+                max-height: 60%;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 20px;
+                border-radius: 15px;
+                border: 2px solid #00ff88;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+                display: none;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                overflow-y: auto;
+                font-family: 'Segoe UI', sans-serif;
+            ">
             </div>
             <div id="controls-hint">
                 WASD / Arrow Keys: Move<br>

@@ -153,6 +153,12 @@ export class Game {
 		if (this.player) {
 			this.player.update(deltaTime, this.inputManager);
 
+			// Update interactive elements
+			if (this.world) {
+				this.world.updateInteractiveElements(deltaTime, this.player.mesh.position);
+				this.world.updatePushableObjects(deltaTime);
+			}
+
 			// Check for area zones
 			if (this.world) {
 				const currentArea = this.world.getCurrentArea(this.player.mesh.position);

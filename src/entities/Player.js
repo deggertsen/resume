@@ -66,14 +66,38 @@ export class Player {
 		if (moveInput.x !== 0 || moveInput.z !== 0) {
 			const moveSpeed = 20; // units per second
 			const moveDistance = moveSpeed * deltaTime;
+			const moveVector = new THREE.Vector3(moveInput.x, 0, moveInput.z);
 			
 			// Calculate potential new position
 			const newPosition = this.mesh.position.clone();
 			newPosition.x += moveInput.x * moveDistance;
 			newPosition.z += moveInput.z * moveDistance;
 			
-			// Check collision if collision system is available
-			if (this.collisionSystem) {
+			// Check collision with pushable objects first
+			let canMove = true;
+			const pushableObjects = this.world ? this.world.pushableObjects : [];
+			
+			for (const pushable of pushableObjects) {
+				if (pushable.checkPlayerCollision(newPosition, this.size)) {
+					// Try to push the object
+					pushable.push(moveVector, 1);
+					
+					// Check if object can move (not blocked by static objects)
+					const futureObjectPos = pushable.mesh.position.clone();
+					futureObjectPos.add(moveVector.clone().multiplyScalar(3));
+					const objectCollision = this.collisionSystem.checkCollision(futureObjectPos, pushable.getCollisionSize());
+					
+					if (objectCollision.collision) {
+						// Object is blocked, player can't move through it
+						canMove = false;
+						break;
+					}
+					// If object can move, player can push through
+				}
+			}
+			
+			// Check collision with static objects if collision system is available
+			if (canMove && this.collisionSystem) {
 				const collision = this.collisionSystem.checkCollision(newPosition, this.size);
 				
 				if (!collision.collision) {
@@ -98,8 +122,8 @@ export class Player {
 						this.mesh.position.z = zOnlyPosition.z;
 					}
 				}
-			} else {
-				// No collision system, move freely
+			} else if (canMove) {
+				// No collision system or no static collision, move freely
 				this.mesh.position.copy(newPosition);
 			}
 			
