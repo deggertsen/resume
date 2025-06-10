@@ -324,15 +324,15 @@ export class Player {
 	}
 
 	animateSwordDraw(progress) {
-		// Move sword from back to right hand ready position
+		// Slight raise from rest position to attack ready
 		const startPos = this.swordRestPosition;
-		const endPos = new THREE.Vector3(2.5, 2, 0.8); // Right hand ready position
+		const endPos = new THREE.Vector3(2.5, 1.5, 1); // Slightly raised and forward
 		
 		this.sword.position.lerpVectors(startPos, endPos, progress);
 		
-		// Rotate sword to ready wielding position
+		// Slight adjustment to ready position
 		const startRot = this.swordRestRotation;
-		const endRot = new THREE.Euler(0, Math.PI / 6, Math.PI / 3); // Raised ready position
+		const endRot = new THREE.Euler(Math.PI / 8, 0, 0); // Raised slightly higher
 		
 		this.sword.rotation.x = THREE.MathUtils.lerp(startRot.x, endRot.x, progress);
 		this.sword.rotation.y = THREE.MathUtils.lerp(startRot.y, endRot.y, progress);
@@ -340,39 +340,45 @@ export class Player {
 	}
 
 	animateSwordSwing(progress) {
-		// Swing sword in a controlled arc like you're actually holding it
-		const swingAngle = Math.PI * 0.5 * progress; // 90-degree swing
+		// Controlled swing staying close to hand position
+		const handX = 2.5; // Right hand X position
+		const handY = 1.5; // Raised hand Y position
 		
-		// Reasonable radius that looks like arm extension
-		const radius = 3.2; // Close enough to look like you're holding it
-		const baseAngle = Math.PI / 8; // Start slightly to the right
-		const angle = baseAngle + swingAngle;
+		// Small arc centered around hand position
+		const swingAngle = Math.PI * 0.4 * progress; // 72-degree swing
+		const radius = 1; // Small radius to stay connected to hand
+		const startAngle = Math.PI / 6; // Start position
+		const angle = startAngle + swingAngle;
 		
-		// Position sword in a controlled arc from right to left
+		// Keep sword close to hand throughout swing
 		this.sword.position.set(
-			Math.cos(angle) * radius + 0.8, // Offset to right side
-			2 + Math.sin(progress * Math.PI) * 0.4, // Natural height variation
-			Math.sin(angle) * radius + 1.5 // In front but not too far
+			handX + Math.cos(angle) * 0.3, // Stay very close to hand X
+			handY + Math.sin(progress * Math.PI) * 0.2, // Slight height variation
+			0.7 + Math.sin(angle) * radius // Swing forward and back
 		);
 		
-		// Rotate sword naturally as if being held
+		// Natural wrist rotation during swing
 		this.sword.rotation.set(
-			-Math.PI / 12, // Slight downward angle
-			angle + Math.PI / 3, // Follow swing direction
-			Math.PI / 4 + Math.cos(progress * Math.PI) * 0.3 // Natural wrist rotation
+			Math.PI / 6 + Math.sin(progress * Math.PI) * 0.3, // Up and down motion
+			angle * 0.5, // Follow swing direction moderately  
+			Math.cos(progress * Math.PI) * 0.2 // Natural wrist twist
 		);
 	}
 
 	animateSwordReturn(progress) {
-		// Return sword to back position
-		const currentPos = this.sword.position;
-		const currentRot = this.sword.rotation;
+		// Return sword smoothly to rest position
+		const startPos = new THREE.Vector3(2.5, 1.5, 1); // End of swing position
+		const endPos = this.swordRestPosition;
 		
-		this.sword.position.lerpVectors(currentPos, this.swordRestPosition, progress);
+		this.sword.position.lerpVectors(startPos, endPos, progress);
 		
-		this.sword.rotation.x = THREE.MathUtils.lerp(currentRot.x, this.swordRestRotation.x, progress);
-		this.sword.rotation.y = THREE.MathUtils.lerp(currentRot.y, this.swordRestRotation.y, progress);
-		this.sword.rotation.z = THREE.MathUtils.lerp(currentRot.z, this.swordRestRotation.z, progress);
+		// Return to rest rotation smoothly
+		const startRot = new THREE.Euler(Math.PI / 8, 0, 0);
+		const endRot = this.swordRestRotation;
+		
+		this.sword.rotation.x = THREE.MathUtils.lerp(startRot.x, endRot.x, progress);
+		this.sword.rotation.y = THREE.MathUtils.lerp(startRot.y, endRot.y, progress);
+		this.sword.rotation.z = THREE.MathUtils.lerp(startRot.z, endRot.z, progress);
 	}
 
 	updateSwordGlow(progress) {
